@@ -2,6 +2,8 @@ const express = require("express");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 
+const userRouter = require("./routes/userRoutes");
+
 // Load environment variables
 dotenv.config();
 
@@ -16,6 +18,12 @@ mongoose.connect(process.env.MONGODB_URL)
         .catch((err) => {
                 console.log("Error connecting to MongoDB", err);
         });
+
+//   Middleware
+app.use(express.json());
+
+//   Routes
+app.use("/api/users", userRouter); //  body parser middleware
 
 //   Start the server
 const PORT = process.env.PORT || 5000;
