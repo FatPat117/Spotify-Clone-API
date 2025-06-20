@@ -2,6 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 
+const { StatusCodes } = require("http-status-codes");
 const userRouter = require("./routes/userRoutes");
 
 // Load environment variables
@@ -22,8 +23,22 @@ mongoose.connect(process.env.MONGODB_URL)
 //   Middleware
 app.use(express.json());
 
-//   Routes
+// Routes
 app.use("/api/users", userRouter); //  body parser middleware
+
+// Error handling middleware
+//404
+app.use("*", (req, res, next) => {
+        const error = new Error(`Route ${req.originalUrl} not found`);
+        error.statusCode = StatusCodes.NOT_FOUND;
+        next(error);
+});
+// Global error handler
+app.use((err, req, res, next) => {
+        const statusCode = err.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+        const message = err.message || "Internal server error";
+        res.status(statusCode).json({ message });
+});
 
 //   Start the server
 const PORT = process.env.PORT || 5000;
