@@ -75,6 +75,25 @@ exports.loginUser = asyncHandler(async (req, res) => {
 //  @access Private
 
 exports.getUserProfile = asyncHandler(async (req, res) => {
-        const user = await User.findById(req.user._id).select("-password");
-        res.status(StatusCodes.OK).json(user);
+        const user = await User.findById(req.user._id)
+                .select("-password")
+                .populate("likedSongs", "title artist duration")
+                .populate("likedAlbums", "title artist coverImage")
+                .populate("followedArtists", "name image")
+                .populate("followedPlaylists", "name creator coverImage");
+
+        if (!user) {
+                res.status(StatusCodes.NOT_FOUND);
+                throw new Error("User not found");
+        }
+
+        res.status(StatusCodes.OK).json({
+                status: "success",
+                data: {
+                        _id: user._id,
+                        name: user.name,
+                        email: user.email,
+                        profilePicture: user.profilePicture,
+                },
+        });
 });

@@ -29,7 +29,7 @@ const playlistSchema = new mongoose.Schema(
                         },
                 ],
                 isPublic: {
-                        type: boolean,
+                        type: Boolean,
                         default: false,
                 },
                 followers: {
