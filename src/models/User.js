@@ -57,9 +57,6 @@ const userSchema = new mongoose.Schema(
         }
 );
 
-// Compile the schema into a model
-const User = mongoose.model("User", userSchema);
-
 // Hash password before saving
 userSchema.pre("save", async function (next) {
         // If password is not modified, skip hashing
@@ -74,5 +71,8 @@ userSchema.pre("save", async function (next) {
 userSchema.methods.matchPassword = async function (enteredPassword) {
         return await bcrypt.compare(enteredPassword, this.password);
 };
+
+// Compile the schema into a model
+const User = mongoose.model("User", userSchema);
 
 module.exports = User;

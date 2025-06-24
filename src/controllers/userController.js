@@ -1,6 +1,7 @@
 const asyncHandler = require("express-async-handler");
 const { StatusCodes } = require("http-status-codes");
 const User = require("../models/User");
+const generateToken = require("../utils/generateToken");
 
 //  @desc Register a new user
 //  @route POST /api/users/register
@@ -55,6 +56,7 @@ exports.loginUser = asyncHandler(async (req, res) => {
                 throw new Error("Invalid email or password");
         }
 
+        const token = generateToken(user._id);
         res.status(StatusCodes.OK).json({
                 status: "success",
                 message: "User logged in successfully",
@@ -63,7 +65,7 @@ exports.loginUser = asyncHandler(async (req, res) => {
                         name: user.name,
                         email: user.email,
                         profilePicture: user.profilePicture,
-                        token: "token",
+                        token,
                 },
         });
 });
