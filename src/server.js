@@ -28,10 +28,8 @@ app.use("/api/users", userRouter); //  body parser middleware
 
 // Error handling middleware
 //404
-app.use("*", (req, res, next) => {
-        const error = new Error(`Route ${req.originalUrl} not found`);
-        error.statusCode = StatusCodes.NOT_FOUND;
-        next(error);
+app.use(/.*/, (req, res, next) => {
+        res.status(404).json({ message: "Not found" });
 });
 // Global error handler
 app.use((err, req, res, next) => {
