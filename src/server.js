@@ -4,6 +4,7 @@ const dotenv = require("dotenv");
 
 const { StatusCodes } = require("http-status-codes");
 const userRouter = require("./routes/userRoutes");
+const artistRouter = require("./routes/artistRoutes");
 
 // Load environment variables
 dotenv.config();
@@ -25,7 +26,7 @@ app.use(express.json()); //  body parser middleware
 
 // Routes
 app.use("/api/users", userRouter);
-
+app.use("/api/artists", artistRouter);
 // Error handling middleware
 //404
 app.use(/.*/, (req, res, next) => {
