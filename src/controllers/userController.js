@@ -69,3 +69,12 @@ exports.loginUser = asyncHandler(async (req, res) => {
                 },
         });
 });
+
+//  @desc Get user profile
+//  @route GET /api/users/profile
+//  @access Private
+
+exports.getUserProfile = asyncHandler(async (req, res) => {
+        const user = await User.findById(req.user._id).select("-password");
+        res.status(StatusCodes.OK).json(user);
+});
