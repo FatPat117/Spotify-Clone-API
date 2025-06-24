@@ -21,10 +21,10 @@ mongoose.connect(process.env.MONGODB_URL)
         });
 
 //   Middleware
-app.use(express.json());
+app.use(express.json()); //  body parser middleware
 
 // Routes
-app.use("/api/users", userRouter); //  body parser middleware
+app.use("/api/users", userRouter);
 
 // Error handling middleware
 //404
