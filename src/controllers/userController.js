@@ -97,3 +97,43 @@ exports.getUserProfile = asyncHandler(async (req, res) => {
                 },
         });
 });
+
+//  @desc Update user profile
+//  @route PUT /api/users/profile
+//  @access Private
+
+exports.updateUserProfile = asyncHandler(async (req, res) => {
+        const user = await User.findById(req.user._id);
+        if (!user) {
+                res.status(StatusCodes.NOT_FOUND);
+                throw new Error("User not found");
+        }
+
+        //   Update user profile
+        user.name = req.body.name || user.name;
+        user.email = req.body.email || user.email;
+
+        //   Update password
+        if (password) {
+                user.password = req.body.password;
+        }
+
+        //   Update profile picture
+        if (req.file) {
+                const result = await uploadToCloudinary(req.file.path, "spotify/users");
+                user.profilePicture = result.secure_url;
+        }
+
+        //   Save user
+        const updatedUser = await user.save(); // Save the user because a pre-save hook that hashets he password
+
+        res.status(StatusCodes.OK).json({
+                status: "success",
+                data: {
+                        _id: updatedUser._id,
+                        name: updatedUser.name,
+                        email: updatedUser.email,
+                        profilePicture: updatedUser.profilePicture,
+                },
+        });
+});
