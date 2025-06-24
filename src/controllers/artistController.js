@@ -52,3 +52,42 @@ exports.createArtist = asyncHandler(async (req, res) => {
                 data: artist,
         });
 });
+
+// @desc Get all artists
+// @route GET /api/artists
+// @access Public
+
+exports.getArtists = asyncHandler(async (req, res) => {
+        const { genre, search, page = 1, limit = 10 } = req.query;
+        // Build filter object
+        const filter = {};
+        if (genre) {
+                filter.genres = { $in: [genre] };
+        }
+        if (search) {
+                filter.$or = [
+                        { name: { $regex: search, $options: "i" } },
+                        { genres: { $regex: search, $options: "i" } },
+                ];
+        }
+
+        //   Pagination
+        const skip = parseInt(page - 1) * parseInt(limit);
+
+        //   Sorting
+        const sort = { followers: -1 };
+
+        const artists = await Artist.find(filter).select("-__v").sort(sort).skip(skip).limit(parseInt(limit));
+
+        const totalArtists = await Artist.countDocuments(filter);
+
+        res.status(StatusCodes.OK).json({
+                status: "success",
+                data: {
+                        artists,
+                        totalArtists,
+                        page,
+                        limit,
+                },
+        });
+});
