@@ -71,3 +71,47 @@ exports.createAlbum = asyncHandler(async (req, res) => {
 
         res.status(StatusCodes.CREATED).json({ status: "success", data: album });
 });
+
+// @desc Get all albums with filtering and pagination
+// @route GET /api/albums?genre=genre&artist=artist&search=search&page=page&limit=limit
+// access Public
+
+exports.getAlbums = asyncHandler(async (req, res) => {
+        const { genre, artist, search, page = 1, limit = 10 } = req.query;
+        // Build filter object
+        const filter = {};
+        if (genre) {
+                filter.genre = genre;
+        }
+        if (artist) {
+                filter.artist = artist;
+        }
+        if (search) {
+                filter.$or = [
+                        { title: { $regex: search, $options: "i" } },
+                        { artist: { $regex: search, $options: "i" } },
+                        { description: { $regex: search, $options: "i" } },
+                        { genre: { $regex: search, $options: "i" } },
+                ];
+        }
+
+        //   Pagination
+        const skip = parseInt(page - 1) * parseInt(limit);
+
+        //   Sorting
+        const sort = { releaseDate: -1 };
+
+        const albums = await Album.find(filter).select("-__v").sort(sort).skip(skip).limit(parseInt(limit));
+
+        const totalAlbums = await Album.countDocuments(filter);
+
+        res.status(StatusCodes.OK).json({
+                status: "success",
+                data: {
+                        albums,
+                        totalAlbums,
+                        page,
+                        limit,
+                },
+        });
+});
