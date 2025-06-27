@@ -7,11 +7,11 @@ const router = express.Router();
 
 // Public routes
 router.get("/", artistController.getArtists);
-router.route("/:id")
-        .get(artistController.getArtistById)
-        .put(protect, isAdmin, upload.single("image"), artistController.updateArtist);
+router.get("/:id", artistController.getArtistById);
 
 // Admin routes
 router.post("/", protect, isAdmin, upload.single("image"), artistController.createArtist);
+router.delete("/:id", protect, isAdmin, artistController.deleteArtist);
+router.put("/:id", protect, isAdmin, upload.single("image"), artistController.updateArtist);
 
 module.exports = router;

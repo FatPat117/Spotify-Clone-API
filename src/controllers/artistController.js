@@ -5,6 +5,7 @@ const Song = require("../models/Song");
 const Album = require("../models/Album");
 const Playlist = require("../models/Playlist");
 const User = require("../models/User");
+const cloudinary = require("cloudinary").v2;
 const uploadToCloudinary = require("../utils/cloudinaryUpload");
 
 // @desc Create a new artist
@@ -135,4 +136,25 @@ exports.updateArtist = asyncHandler(async (req, res) => {
         const updatedArtist = await artist.save();
 
         res.status(StatusCodes.OK).json({ status: "success", data: artist });
+});
+
+// @desc Delete an artist
+// @route DELETE /api/artists/:id
+// @access Private/Admin
+
+exports.deleteArtist = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const artist = await Artist.findByIdAndDelete(id);
+        if (!artist) {
+                res.status(StatusCodes.NOT_FOUND);
+                throw new Error("Artist not found");
+        }
+
+        // Delete all songs by the artist
+        await Song.deleteMany({ artist: id });
+
+        // Delete all albums by the artist
+        await Album.deleteMany({ artist: id });
+
+        res.status(StatusCodes.OK).json({ status: "success", message: "Artist deleted successfully" });
 });
