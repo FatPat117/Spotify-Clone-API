@@ -58,6 +58,7 @@ exports.loginUser = asyncHandler(async (req, res) => {
         }
 
         const token = generateToken(user._id);
+
         res.status(StatusCodes.OK).json({
                 status: "success",
                 message: "User logged in successfully",

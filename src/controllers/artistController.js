@@ -172,7 +172,7 @@ exports.getTopArtists = asyncHandler(async (req, res) => {
 // desc Get Artist's top Songs
 // route GET /api/artists/:id/top-songs?limit=10
 // access Public
-const getArtistTopSongs = asyncHandler(async (req, res) => {
+exports.getArtistTopSongs = asyncHandler(async (req, res) => {
         const { id } = req.params;
         const { limit } = req.query;
         const songs = await Song.find({ artist: id })
