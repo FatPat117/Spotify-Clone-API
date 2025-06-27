@@ -2,6 +2,7 @@ const asyncHandler = require("express-async-handler");
 const { StatusCodes } = require("http-status-codes");
 const User = require("../models/User");
 const generateToken = require("../utils/generateToken");
+const uploadToCloudinary = require("../utils/cloudinaryUpload");
 
 //  @desc Register a new user
 //  @route POST /api/users/register
@@ -114,7 +115,7 @@ exports.updateUserProfile = asyncHandler(async (req, res) => {
         user.email = req.body.email || user.email;
 
         //   Update password
-        if (password) {
+        if (req.body.password) {
                 user.password = req.body.password;
         }
 
@@ -125,7 +126,7 @@ exports.updateUserProfile = asyncHandler(async (req, res) => {
         }
 
         //   Save user
-        const updatedUser = await user.save(); // Save the user because a pre-save hook that hashets he password
+        const updatedUser = await user.save(); // Save the user because a pre-save hook that hashed the password
 
         res.status(StatusCodes.OK).json({
                 status: "success",

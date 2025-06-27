@@ -91,3 +91,17 @@ exports.getArtists = asyncHandler(async (req, res) => {
                 },
         });
 });
+
+// @desc Get an artist by id
+// @route GET /api/artists/:id
+// @access Public
+
+exports.getArtistById = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const artist = await Artist.findById(id).select("-__v");
+        if (!artist) {
+                res.status(StatusCodes.NOT_FOUND);
+                throw new Error("Artist not found");
+        }
+        res.status(StatusCodes.OK).json({ status: "success", data: artist });
+});
