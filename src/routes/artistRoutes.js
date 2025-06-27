@@ -8,6 +8,7 @@ const router = express.Router();
 // Public routes
 router.get("/", artistController.getArtists);
 router.get("/:id", artistController.getArtistById);
+router.get("/top", artistController.getTopArtists);
 
 // Admin routes
 router.post("/", protect, isAdmin, upload.single("image"), artistController.createArtist);

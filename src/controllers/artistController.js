@@ -158,3 +158,13 @@ exports.deleteArtist = asyncHandler(async (req, res) => {
 
         res.status(StatusCodes.OK).json({ status: "success", message: "Artist deleted successfully" });
 });
+
+//@desc Get top 10 artists
+//@route GET /api/artists/top
+//@access Public
+
+exports.getTopArtists = asyncHandler(async (req, res) => {
+        const { limit } = req.query;
+        const artists = await Artist.find().sort({ followers: -1 }).limit(parseInt(limit));
+        res.status(StatusCodes.OK).json({ status: "success", data: artists });
+});
