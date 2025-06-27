@@ -168,3 +168,22 @@ exports.getTopArtists = asyncHandler(async (req, res) => {
         const artists = await Artist.find().sort({ followers: -1 }).limit(parseInt(limit));
         res.status(StatusCodes.OK).json({ status: "success", data: artists });
 });
+
+// desc Get Artist's top Songs
+// route GET /api/artists/:id/top-songs?limit=10
+// access Public
+const getArtistTopSongs = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const { limit } = req.query;
+        const songs = await Song.find({ artist: id })
+                .sort({ plays: -1 })
+                .limit(parseInt(limit))
+                .populate("album", "title coverImage");
+
+        if (!songs || songs.length === 0) {
+                res.status(StatusCodes.NOT_FOUND);
+                throw new Error("No songs found for this artist");
+        }
+
+        res.status(StatusCodes.OK).json({ status: "success", data: songs });
+});
