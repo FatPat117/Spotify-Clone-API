@@ -105,3 +105,34 @@ exports.getArtistById = asyncHandler(async (req, res) => {
         }
         res.status(StatusCodes.OK).json({ status: "success", data: artist });
 });
+
+// @desc Update an artist
+// @route PUT /api/artists/:id
+// @access Private/Admin
+
+exports.updateArtist = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const { name, bio, genres, isVerified } = req.body;
+        const artist = await Artist.findById(id);
+        if (!artist) {
+                res.status(StatusCodes.NOT_FOUND);
+                throw new Error("Artist not found");
+        }
+
+        //   Update artist
+        artist.name = name || artist.name;
+        artist.bio = bio || artist.bio;
+        artist.genres = genres || artist.genres;
+        artist.isVerified = isVerified || artist.isVerified;
+
+        //   Update artist image
+        if (req.file) {
+                const result = await uploadToCloudinary(req.file.path, "spotify/artists");
+                artist.image = result.secure_url;
+        }
+
+        //   Save artist
+        const updatedArtist = await artist.save();
+
+        res.status(StatusCodes.OK).json({ status: "success", data: artist });
+});
