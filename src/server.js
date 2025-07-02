@@ -6,6 +6,7 @@ const { StatusCodes } = require("http-status-codes");
 const userRouter = require("./routes/userRoutes");
 const artistRouter = require("./routes/artistRoutes");
 const albumRouter = require("./routes/albumRoutes");
+const songRouter = require("./routes/songRoutes");
 
 // Load environment variables
 dotenv.config();
@@ -29,6 +30,8 @@ app.use(express.json()); //  body parser middleware
 app.use("/api/users", userRouter);
 app.use("/api/artists", artistRouter);
 app.use("/api/albums", albumRouter);
+app.use("/api/songs", songRouter);
+
 // Error handling middleware
 //404
 app.use(/.*/, (req, res, next) => {
