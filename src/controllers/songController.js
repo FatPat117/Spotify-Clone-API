@@ -181,3 +181,32 @@ exports.updateSong = asyncHandler(async (req, res) => {
         await song.save();
         res.status(StatusCodes.OK).json({ status: "success", data: song });
 });
+
+// @desc Delete a song
+// @route DELETE /api/songs/:id
+// @access Private/Admin
+
+exports.deleteSong = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const song = await Song.findById(id);
+        if (!song) {
+                res.status(StatusCodes.NOT_FOUND);
+                throw new Error("Song not found");
+        }
+
+        // Delete from artist's songs
+        await Artist.updateOne({ songs: { $in: [id] } }, { $pull: { songs: id } });
+
+        // Delete from album's songs
+        if (song.album) {
+                await Album.updateOne({ songs: { $in: [id] } }, { $pull: { songs: id } });
+        }
+
+        // Delete from cloudinary
+        await cloudinary.uploader.destroy(song.audioUrl);
+
+        // Delete song
+        await song.deleteOne();
+
+        res.status(StatusCodes.OK).json({ status: "success", message: "Song deleted successfully" });
+});
