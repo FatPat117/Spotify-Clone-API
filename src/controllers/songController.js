@@ -110,3 +110,74 @@ exports.getSongs = asyncHandler(async (req, res) => {
                 .populate("featuredArtists", "name image");
         res.status(StatusCodes.OK).json({ status: "success", data: songs });
 });
+
+// @desc Get a song by id
+// @route GET /api/songs/:id
+// @access Public
+
+exports.getSongById = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+
+        const song = await Song.findById(id)
+                .populate("artist", "name image bio")
+                .populate("album", "title coverImage releasedDate")
+                .populate("featuredArtists", "name image bio");
+
+        if (!song) {
+                res.status(StatusCodes.NOT_FOUND);
+                throw new Error("Song not found");
+        }
+
+        // Increment play count
+        song.plays += 1;
+        await song.save();
+
+        res.status(StatusCodes.OK).json({ status: "success", data: song });
+});
+
+// @desc Update a song
+// @route PUT /api/songs/:id
+// @access Private/Admin
+
+exports.updateSong = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const { title, artistId, albumId, duration, genre, lyrics, isExplicit, featuredArtists } = req.body;
+
+        const song = await Song.findById(id);
+        if (!song) {
+                res.status(StatusCodes.NOT_FOUND);
+                throw new Error("Song not found");
+        }
+
+        if (artistId) {
+                const artist = await Artist.findById(artistId);
+                if (!artist) {
+                        res.status(StatusCodes.NOT_FOUND);
+                        throw new Error("Artist not found");
+                }
+                song.artist = artist._id;
+        }
+        song.title = title || song.title;
+        song.duration = duration || song.duration;
+        song.genre = genre || song.genre;
+        song.lyrics = lyrics || song.lyrics;
+        song.isExplicit = isExplicit === "true" ? true : false;
+        song.featuredArtists = featuredArtists ? JSON.parse(featuredArtists) : song.featuredArtists;
+        song.album = albumId ? albumId : song.album;
+
+        // Update cover image
+        if (req.files && req.files.cover) {
+                const coverResult = await uploadToCloudinary(req.files.cover[0].path, "spotify/songs");
+                song.coverImage = coverResult.secure_url;
+        }
+
+        // Update audio file
+        if (req.files && req.files.audio) {
+                const audioResult = await uploadToCloudinary(req.files.audio[0].path, "spotify/songs");
+                song.audioUrl = audioResult.secure_url;
+        }
+
+        // Update featured artists
+        await song.save();
+        res.status(StatusCodes.OK).json({ status: "success", data: song });
+});
