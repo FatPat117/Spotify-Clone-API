@@ -210,3 +210,36 @@ exports.deleteSong = asyncHandler(async (req, res) => {
 
         res.status(StatusCodes.OK).json({ status: "success", message: "Song deleted successfully" });
 });
+
+// @desc Get top songs
+// @route GET /api/songs/top
+// @access Public
+
+exports.getTopSongs = asyncHandler(async (req, res) => {
+        const { limit = 10 } = req.query;
+
+        const topSongs = await Song.find({})
+                .sort({ plays: -1 })
+                .limit(parseInt(limit))
+                .populate("artist", "name image")
+                .populate("album", "title coverImage")
+                .populate("featuredArtists", "name image");
+
+        res.status(StatusCodes.OK).json({ status: "success", data: topSongs });
+});
+
+// @desc Get new Releases
+// @route GET /api/songs/new-releases
+// @access Public
+exports.getNewReleases = asyncHandler(async (req, res) => {
+        const { limit = 10 } = req.query;
+
+        const newReleases = await Song.find({})
+                .sort({ releasedDate: -1 })
+                .limit(parseInt(limit))
+                .populate("artist", "name image")
+                .populate("album", "title coverImage")
+                .populate("featuredArtists", "name image");
+
+        res.status(StatusCodes.OK).json({ status: "success", data: newReleases });
+});

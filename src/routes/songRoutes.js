@@ -14,8 +14,12 @@ const songUpload = upload.fields([
 // Public routes
 router.get("/", songController.getSongs);
 router.get("/:id", songController.getSongById);
+router.get("/top", songController.getTopSongs);
+router.get("/new-releases", songController.getNewReleases);
+
 // Admin routes
 router.post("/", protect, isAdmin, songUpload, songController.createSong);
 router.put("/:id", protect, isAdmin, songUpload, songController.updateSong);
+router.delete("/:id", protect, isAdmin, songController.deleteSong);
 
 module.exports = router;
