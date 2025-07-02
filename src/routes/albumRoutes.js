@@ -7,6 +7,9 @@ const router = express.Router();
 
 // Public routes
 router.get("/", albumController.getAlbums);
+router.get("/:id", albumController.getAlbumById);
+
 // Admin routes
 router.post("/", protect, isAdmin, upload.single("coverImage"), albumController.createAlbum);
+router.put("/:id", protect, isAdmin, upload.single("coverImage"), albumController.updateAlbum);
 module.exports = router;

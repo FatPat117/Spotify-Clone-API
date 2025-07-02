@@ -27,9 +27,13 @@ exports.createAlbum = asyncHandler(async (req, res) => {
                 throw new Error("Description must be between 10 and 500 characters");
         }
 
+        if (!mongoose.Types.ObjectId.isValid(artistId)) {
+                res.status(StatusCodes.BAD_REQUEST);
+                throw new Error("Invalid artist ID format");
+        }
         // check if artist exists
-        const artist = await Artist.findById(artistId);
-        if (!artist) {
+        const existingArtist = await Artist.findById(artistId);
+        if (!existingArtist) {
                 res.status(StatusCodes.NOT_FOUND);
                 throw new Error("Artist not found");
         }
@@ -57,7 +61,7 @@ exports.createAlbum = asyncHandler(async (req, res) => {
         // Create album
         const album = await Album.create({
                 title,
-                artist: artistId,
+                artist: existingArtist._id,
                 releaseDate: releaseDate ? new Date(releaseDate) : Date.now(),
                 genre,
                 description,
@@ -66,8 +70,8 @@ exports.createAlbum = asyncHandler(async (req, res) => {
         });
 
         // Add album to artist's albums
-        artist.albums.push(album._id);
-        await artist.save();
+        existingArtist.albums.push(album._id);
+        await existingArtist.save();
 
         res.status(StatusCodes.CREATED).json({ status: "success", data: album });
 });
@@ -87,9 +91,13 @@ exports.getAlbums = asyncHandler(async (req, res) => {
                 filter.artist = artist;
         }
         if (search) {
+                const matchingArtists = await Artist.find({
+                        name: { $regex: search, $options: "i" },
+                }).select("_id");
+                const artistIds = matchingArtists.map((a) => a._id);
                 filter.$or = [
                         { title: { $regex: search, $options: "i" } },
-                        { artist: { $regex: search, $options: "i" } },
+                        { artist: { $in: artistIds } },
                         { description: { $regex: search, $options: "i" } },
                         { genre: { $regex: search, $options: "i" } },
                 ];
@@ -101,7 +109,12 @@ exports.getAlbums = asyncHandler(async (req, res) => {
         //   Sorting
         const sort = { releaseDate: -1 };
 
-        const albums = await Album.find(filter).select("-__v").sort(sort).skip(skip).limit(parseInt(limit));
+        const albums = await Album.find(filter)
+                .select("-__v")
+                .sort(sort)
+                .skip(skip)
+                .limit(parseInt(limit))
+                .populate("artist", "name image");
 
         const totalAlbums = await Album.countDocuments(filter);
 
@@ -114,4 +127,71 @@ exports.getAlbums = asyncHandler(async (req, res) => {
                         limit,
                 },
         });
+});
+
+// @desc Get album by id
+// @route GET /api/albums/:id
+// @access Public
+
+exports.getAlbumById = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const album = await Album.findById(id).populate("artist", "name image");
+        if (!album) {
+                res.status(StatusCodes.NOT_FOUND);
+                throw new Error("Album not found");
+        }
+        res.status(StatusCodes.OK).json({ status: "success", data: album });
+});
+
+// @desc Update an album
+// @route PUT /api/albums/:id
+// @access Private/Admin
+
+exports.updateAlbum = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const { title, artistId, releaseDate, genre, description, isExplicit } = req.body;
+
+        const album = await Album.findById(id);
+
+        if (!album) {
+                res.status(StatusCodes.NOT_FOUND);
+                throw new Error("Album not found");
+        }
+
+        if (title) {
+                album.title = title || album.title;
+        }
+
+        if (artistId) {
+                const existingArtist = await Artist.findById(artistId);
+                if (!existingArtist) {
+                        res.status(StatusCodes.NOT_FOUND);
+                        throw new Error("Artist not found");
+                }
+                album.artist = existingArtist._id;
+        }
+
+        if (releaseDate) {
+                album.releaseDate = releaseDate || album.releaseDate;
+        }
+
+        if (genre) {
+                album.genre = genre || album.genre;
+        }
+
+        if (description) {
+                album.description = description || album.description;
+        }
+
+        if (isExplicit) {
+                album.isExplicit = isExplicit === "true" ? true : false;
+        }
+
+        if (req.file) {
+                const result = await uploadToCloudinary(req.file.path, "spotify/albums");
+                album.coverImage = result.secure_url;
+        }
+
+        const updatedAlbum = await album.save();
+        res.status(StatusCodes.OK).json({ status: "success", data: updatedAlbum });
 });
