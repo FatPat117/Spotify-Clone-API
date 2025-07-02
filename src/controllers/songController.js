@@ -3,6 +3,7 @@ const asyncHandler = require("express-async-handler");
 const Song = require("../models/Song");
 const Album = require("../models/Album");
 const Artist = require("../models/Artist");
+const mongoose = require("mongoose");
 
 const uploadToCloudinary = require("../utils/cloudinaryUpload");
 
@@ -12,7 +13,7 @@ const uploadToCloudinary = require("../utils/cloudinaryUpload");
 
 exports.createSong = asyncHandler(async (req, res) => {
         const { title, artistId, albumId, duration, genre, lyrics, isExplicit, featuredArtists } = req.body;
-        if (!title || !artistId || !albumId || !duration || !genre || !lyrics) {
+        if (!title || !artistId || !duration || !genre || !lyrics) {
                 res.status(StatusCodes.BAD_REQUEST);
                 throw new Error("All fields are required");
         }
@@ -44,7 +45,7 @@ exports.createSong = asyncHandler(async (req, res) => {
         const song = await Song.create({
                 title,
                 artist: artist._id,
-                album: album._id || null,
+                album: albumId ? albumId : null,
                 duration,
                 genre,
                 lyrics,
@@ -52,6 +53,8 @@ exports.createSong = asyncHandler(async (req, res) => {
                 coverImage,
                 audioUrl: audioFile,
                 featuredArtists: featuredArtists ? JSON.parse(featuredArtists) : [],
+                coverImage,
+                audioUrl: audioFile,
         });
 
         // Add song to artist's songs
@@ -65,4 +68,45 @@ exports.createSong = asyncHandler(async (req, res) => {
         }
 
         res.status(StatusCodes.CREATED).json({ status: "success", data: song });
+});
+
+// @desc Get all songs
+// @route GET /api/songs
+// @access Public
+
+exports.getSongs = asyncHandler(async (req, res) => {
+        const { page = 1, limit = 10, search, sort, genre, artistId } = req.query;
+
+        const filter = {};
+        if (genre) {
+                filter.genre = genre;
+        }
+
+        if (artistId) {
+                filter.artist = artistId;
+        }
+
+        if (search) {
+                const matchingArtists = await Artist.find({
+                        name: { $regex: search, $options: "i" },
+                }).select("_id");
+                const artistIds = matchingArtists.map((a) => a._id);
+                filter.$or = [
+                        { title: { $regex: search, $options: "i" } },
+                        { artist: { $in: artistIds } },
+                        { genre: { $regex: search, $options: "i" } },
+                ];
+        }
+
+        const skip = parseInt(page - 1) * parseInt(limit);
+        const sortBy = { releasedDate: -1 };
+        const songs = await Song.find(filter)
+                .select("-__v")
+                .sort(sortBy)
+                .skip(skip)
+                .limit(parseInt(limit))
+                .populate("artist", "name image")
+                .populate("album", "title image")
+                .populate("featuredArtists", "name image");
+        res.status(StatusCodes.OK).json({ status: "success", data: songs });
 });
