@@ -195,3 +195,34 @@ exports.updateAlbum = asyncHandler(async (req, res) => {
         const updatedAlbum = await album.save();
         res.status(StatusCodes.OK).json({ status: "success", data: updatedAlbum });
 });
+
+// @desc Delete an album
+// @route DELETE /api/albums/:id
+// @access Private/Admin
+
+exports.deleteAlbum = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const album = await Album.findByIdAndDelete(id);
+
+        if (!album) {
+                res.status(StatusCodes.NOT_FOUND);
+                throw new Error("Album not found");
+        }
+
+        // Remove album from artist's albums
+        await Artist.updateOne(
+                {
+                        _id: album.artist,
+                },
+                {
+                        $pull: {
+                                albums: album._id,
+                        },
+                }
+        );
+
+        // Update songs to remove album reference
+        await Song.updateMany({ album: album._id }, { $unset: { album: 1 } });
+
+        res.status(StatusCodes.OK).json({ status: "success", data: album });
+});
