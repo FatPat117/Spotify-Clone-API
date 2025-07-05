@@ -184,3 +184,28 @@ exports.updatePlaylist = asyncHandler(async (req, res) => {
                 playlist,
         });
 });
+
+// @desc Delete a playlist
+// route DELETE /api/playlists/:id
+// @access Private
+exports.deletePlaylist = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const playlist = await Playlist.findById(id);
+
+        if (!playlist) {
+                res.status(StatusCodes.NOT_FOUND);
+                throw new Error("Playlist not found");
+        }
+
+        // Check if the user is the creator
+        if (!playlist.creator.equals(req.user._id)) {
+                res.status(StatusCodes.FORBIDDEN);
+                throw new Error("You are not authorized to delete this playlist");
+        }
+
+        await playlist.deleteOne();
+        res.status(StatusCodes.OK).json({
+                success: true,
+                message: "Playlist deleted successfully",
+        });
+});
