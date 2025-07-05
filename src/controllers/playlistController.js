@@ -107,3 +107,80 @@ exports.getUserPlaylists = asyncHandler(async (req, res) => {
                 playlists,
         });
 });
+
+// @desc Get a playlist by id
+// route GET /api/playlists/:id
+// @access Public
+exports.getPlaylistById = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const playlist = await Playlist.findById(id)
+                .populate("creator", "name profilePicture")
+                .populate("collaborators", "name profilePicture");
+
+        if (!playlist) {
+                res.status(StatusCodes.NOT_FOUND);
+                throw new Error("Playlist not found");
+        }
+
+        // Check if the playlist is public or the user is the creator or a collaborator
+        if (
+                !playlist.isPublic &&
+                playlist.creator.toString() !== req.user._id.toString() &&
+                !playlist.collaborators.includes(req.user._id)
+        ) {
+                res.status(StatusCodes.FORBIDDEN);
+                throw new Error("You are not authorized to access this playlist");
+        }
+
+        res.status(StatusCodes.OK).json({
+                success: true,
+                message: "Playlist fetched successfully",
+                playlist,
+        });
+});
+
+// @desc Update a playlist
+// route PUT /api/playlists/:id
+// @access Private
+exports.updatePlaylist = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const { name, description, isPublic } = req.body;
+
+        const playlist = await Playlist.findById(id);
+        if (!playlist) {
+                res.status(StatusCodes.NOT_FOUND);
+                throw new Error("Playlist not found");
+        }
+
+        if (
+                !playlist.creator.equals(req.user._id) &&
+                !playlist.collaborators.some((collab) => collab.equals(req.user._id))
+        ) {
+                res.status(StatusCodes.FORBIDDEN);
+                throw new Error("You are not authorized to update this playlist");
+        }
+
+        // Update the playlist
+        if (name) {
+                playlist.name = name || playlist.name;
+        }
+        if (description) {
+                playlist.description = description || playlist.description;
+        }
+
+        if (playlist.creator.equals(req.user._id)) {
+                playlist.isPublic = isPublic || playlist.isPublic;
+        }
+
+        if (req.file) {
+                const result = await uploadToCloudinary(req.file.path, "playlists");
+                playlist.coverImage = result.secure_url;
+        }
+        await playlist.save();
+
+        res.status(StatusCodes.OK).json({
+                success: true,
+                message: "Playlist updated successfully",
+                playlist,
+        });
+});

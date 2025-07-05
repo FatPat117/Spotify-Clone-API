@@ -7,9 +7,10 @@ const router = express.Router();
 
 // Public routes
 router.get("/", playlistController.getPlaylists);
+router.get("/:id", playlistController.getPlaylistById);
 router.get("/user/me", protect, playlistController.getUserPlaylists);
 
 // Admin routes
 router.post("/", protect, isAdmin, upload.single("coverImage"), playlistController.createPlaylist);
-
+router.put("/:id", protect, isAdmin, upload.single("coverImage"), playlistController.updatePlaylist);
 module.exports = router;
