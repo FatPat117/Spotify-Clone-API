@@ -209,3 +209,52 @@ exports.deletePlaylist = asyncHandler(async (req, res) => {
                 message: "Playlist deleted successfully",
         });
 });
+
+// @desc Add a song to a playlist
+// route POST /api/playlists/:id/songs
+// @access Private
+exports.addSongToPlaylist = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const { songId } = req.body;
+
+        if (!songId || !Array.isArray(songId)) {
+                res.status(StatusCodes.BAD_REQUEST);
+                throw new Error("Song ID is required");
+        }
+
+        const playlist = await Playlist.findById(id);
+        if (!playlist) {
+                res.status(StatusCodes.NOT_FOUND);
+                throw new Error("Playlist not found");
+        }
+
+        // Check if the user is the creator or a collaborator
+        if (
+                !playlist.creator.equals(req.user._id) &&
+                !playlist.collaborators.some((collab) => collab.equals(req.user._id))
+        ) {
+                res.status(StatusCodes.FORBIDDEN);
+                throw new Error("You are not authorized to add a song to this playlist");
+        }
+
+        // Add the songs to the playlist
+        for (const song of songId) {
+                const song = await Song.findById(song);
+                if (!song) {
+                        continue;
+                }
+
+                // check if the song is already in the playlist
+                if (playlist.songs.includes(song._id)) {
+                        continue;
+                }
+
+                playlist.songs.push(song._id);
+                await playlist.save();
+        }
+
+        res.status(StatusCodes.OK).json({
+                success: true,
+                message: "Songs added to playlist successfully",
+        });
+});

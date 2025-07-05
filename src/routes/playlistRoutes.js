@@ -13,5 +13,6 @@ router.get("/user/me", protect, playlistController.getUserPlaylists);
 // Admin routes
 router.post("/", protect, isAdmin, upload.single("coverImage"), playlistController.createPlaylist);
 router.put("/:id", protect, isAdmin, upload.single("coverImage"), playlistController.updatePlaylist);
+router.put("/:id/add-songs", protect, isAdmin, playlistController.addSongToPlaylist);
 router.delete("/:id", protect, isAdmin, playlistController.deletePlaylist);
 module.exports = router;
