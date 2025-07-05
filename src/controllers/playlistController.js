@@ -385,3 +385,18 @@ exports.removeCollaboratorFromPlaylist = asyncHandler(async (req, res) => {
                 message: "Collaborator removed from playlist successfully",
         });
 });
+
+// @desc Get featured playlists
+// route GET /api/playlists/featured
+// @access Public
+exports.getFeaturedPlaylists = asyncHandler(async (req, res) => {
+        const playlists = await Playlist.find({ isPublic: true, isFeatured: true })
+                .sort({ followers: -1 })
+                .populate("creator", "name profilePicture");
+
+        res.status(StatusCodes.OK).json({
+                success: true,
+                message: "Featured playlists fetched successfully",
+                playlists,
+        });
+});

@@ -9,7 +9,7 @@ const router = express.Router();
 router.get("/", playlistController.getPlaylists);
 router.get("/:id", playlistController.getPlaylistById);
 router.get("/user/me", protect, playlistController.getUserPlaylists);
-
+router.get("/featured", playlistController.getFeaturedPlaylists);
 // Admin routes
 router.post("/", protect, isAdmin, upload.single("coverImage"), playlistController.createPlaylist);
 router.put("/:id", protect, isAdmin, upload.single("coverImage"), playlistController.updatePlaylist);
