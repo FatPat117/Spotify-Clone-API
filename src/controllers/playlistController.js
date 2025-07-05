@@ -90,3 +90,20 @@ exports.getPlaylists = asyncHandler(async (req, res) => {
                 totalPages: Math.ceil(total / limit),
         });
 });
+
+// @desc Get user's playlists
+// route GET /api/playlists/user
+// @access Private
+exports.getUserPlaylists = asyncHandler(async (req, res) => {
+        const playlists = await Playlist.find({
+                $or: [{ creator: req.user._id }, { collaborators: req.user._id }],
+        })
+                .sort({ createdAt: -1 })
+                .populate("creator", "name profilePicture");
+
+        res.status(StatusCodes.OK).json({
+                success: true,
+                message: "User's playlists fetched successfully",
+                playlists,
+        });
+});

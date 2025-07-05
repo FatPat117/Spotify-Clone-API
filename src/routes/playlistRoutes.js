@@ -6,6 +6,8 @@ const upload = require("../middlewares/upload");
 const router = express.Router();
 
 // Public routes
+router.get("/", playlistController.getPlaylists);
+router.get("/user/me", protect, playlistController.getUserPlaylists);
 
 // Admin routes
 router.post("/", protect, isAdmin, upload.single("coverImage"), playlistController.createPlaylist);
