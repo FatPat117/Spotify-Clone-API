@@ -258,3 +258,43 @@ exports.addSongToPlaylist = asyncHandler(async (req, res) => {
                 message: "Songs added to playlist successfully",
         });
 });
+
+// @desc Remove a song from a playlist
+// route DELETE /api/playlists/:id/songs
+// @access Private
+exports.removeSongFromPlaylist = asyncHandler(async (req, res) => {
+        const { playlistId, songId } = req.params;
+        if (!playlistId || !songId) {
+                res.status(StatusCodes.BAD_REQUEST);
+                throw new Error("Song ID is required");
+        }
+
+        const playlist = await Playlist.findById(playlistId);
+        if (!playlist) {
+                res.status(StatusCodes.NOT_FOUND);
+                throw new Error("Playlist not found");
+        }
+
+        // Check if the user is the creator or a collaborator
+        if (
+                !playlist.creator.equals(req.user._id) &&
+                !playlist.collaborators.some((collab) => collab.equals(req.user._id))
+        ) {
+                res.status(StatusCodes.FORBIDDEN);
+                throw new Error("You are not authorized to remove a song from this playlist");
+        }
+
+        // check if the song is in the playlist
+        if (!playlist.songs.some((song) => song.equals(songId))) {
+                res.status(StatusCodes.BAD_REQUEST);
+                throw new Error("Song not found in playlist");
+        }
+
+        playlist.songs = playlist.songs.filter((song) => !song.equals(songId));
+        await playlist.save();
+
+        res.status(StatusCodes.OK).json({
+                success: true,
+                message: "Song removed from playlist successfully",
+        });
+});
