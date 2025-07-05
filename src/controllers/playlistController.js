@@ -344,3 +344,44 @@ exports.addCollaboratorToPlaylist = asyncHandler(async (req, res) => {
                 message: "Collaborator added to playlist successfully",
         });
 });
+
+// @desc Remove collaborator from a playlist
+// route DELETE /api/playlists/:playlistId/remove-collaborator
+// @access Private
+exports.removeCollaboratorFromPlaylist = asyncHandler(async (req, res) => {
+        const { playlistId } = req.params;
+        const { userId } = req.body;
+
+        const user = await User.findById(userId);
+        if (!user) {
+                res.status(StatusCodes.NOT_FOUND);
+                throw new Error("User not found");
+        }
+
+        const playlist = await Playlist.findById(playlistId);
+        if (!playlist) {
+                res.status(StatusCodes.NOT_FOUND);
+                throw new Error("Playlist not found");
+        }
+
+        // Check if the user is the creator
+        if (!playlist.creator.equals(req.user._id)) {
+                res.status(StatusCodes.FORBIDDEN);
+                throw new Error("You are not authorized to remove a collaborator from this playlist");
+        }
+
+        // Check if the user is a collaborator
+        if (!playlist.collaborators.includes(user._id)) {
+                res.status(StatusCodes.BAD_REQUEST);
+                throw new Error("User is not a collaborator");
+        }
+
+        // Remove the user as a collaborator
+        playlist.collaborators = playlist.collaborators.filter((collab) => !collab.equals(user._id));
+        await playlist.save();
+
+        res.status(StatusCodes.OK).json({
+                success: true,
+                message: "Collaborator removed from playlist successfully",
+        });
+});

@@ -16,5 +16,7 @@ router.put("/:id", protect, isAdmin, upload.single("coverImage"), playlistContro
 router.put("/:playlistId/add-songs", protect, playlistController.addSongToPlaylist);
 router.put("/:playlistId/remove-song/:songId", protect, playlistController.removeSongFromPlaylist);
 router.put("/:playlistId/add-collaborator", protect, playlistController.addCollaboratorToPlaylist);
+router.put("/:playlistId/remove-collaborator", protect, playlistController.removeCollaboratorFromPlaylist);
 router.delete("/:id", protect, isAdmin, playlistController.deletePlaylist);
+
 module.exports = router;
