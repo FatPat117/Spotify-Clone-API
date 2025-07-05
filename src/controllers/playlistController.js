@@ -298,3 +298,49 @@ exports.removeSongFromPlaylist = asyncHandler(async (req, res) => {
                 message: "Song removed from playlist successfully",
         });
 });
+
+// @desc Add collaborator to a playlist
+// route POST /api/playlists/:playlistId/add-collaborator
+// @access Private
+exports.addCollaboratorToPlaylist = asyncHandler(async (req, res) => {
+        const { playlistId } = req.params;
+        const { userId } = req.body;
+
+        if (!userId) {
+                res.status(StatusCodes.BAD_REQUEST);
+                throw new Error("User ID is required");
+        }
+
+        const user = await User.findById(userId);
+        if (!user) {
+                res.status(StatusCodes.NOT_FOUND);
+                throw new Error("User not found");
+        }
+
+        const playlist = await Playlist.findById(playlistId);
+        if (!playlist) {
+                res.status(StatusCodes.NOT_FOUND);
+                throw new Error("Playlist not found");
+        }
+
+        // Check if the user is the creator
+        if (!playlist.creator.equals(req.user._id)) {
+                res.status(StatusCodes.FORBIDDEN);
+                throw new Error("You are not authorized to add a collaborator to this playlist");
+        }
+
+        // Check if the user is already a collaborator
+        if (playlist.collaborators.includes(user._id)) {
+                res.status(StatusCodes.BAD_REQUEST);
+                throw new Error("User is already a collaborator");
+        }
+
+        // Add the user as a collaborator
+        playlist.collaborators.push(user._id);
+        await playlist.save();
+
+        res.status(StatusCodes.OK).json({
+                success: true,
+                message: "Collaborator added to playlist successfully",
+        });
+});
