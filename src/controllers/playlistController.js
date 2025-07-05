@@ -53,3 +53,40 @@ exports.createPlaylist = asyncHandler(async (req, res) => {
                 playlist,
         });
 });
+
+// @desc Get all playlists
+// route GET /api/playlists
+// @access Public
+exports.getPlaylists = asyncHandler(async (req, res) => {
+        const { page = 1, limit = 10, search, sort } = req.query;
+
+        const filter = { isPublic: true };
+
+        if (search) {
+                filter.$or = [
+                        { name: { $regex: search, $options: "i" } },
+                        { description: { $regex: search, $options: "i" } },
+                ];
+        }
+
+        const skip = parseInt(page) - 1 * parseInt(limit);
+
+        const playlists = await Playlist.find(filter)
+                .skip(skip)
+                .limit(limit)
+                .sort({ followers: -1 })
+                .populate("creator", "name profilePicture")
+                .populate("collaborators", "name profilePicture");
+
+        const total = await Playlist.countDocuments(filter);
+
+        res.status(StatusCodes.OK).json({
+                success: true,
+                message: "Playlists fetched successfully",
+                playlists,
+                totalPlaylists: total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit),
+        });
+});
