@@ -15,5 +15,6 @@ router.get("/profile", protect, userController.getUserProfile);
 router.put("/profile", protect, upload.single("profilePicture"), userController.updateUserProfile);
 router.put("/toggle-like-song/:id", protect, userController.toggleLikeSong);
 router.put("/toggle-follow-artist/:id", protect, userController.toggleFollowArtist);
+router.put("/toggle-follow-playlist/:id", protect, userController.toggleFollowPlaylist);
 
 module.exports = router;

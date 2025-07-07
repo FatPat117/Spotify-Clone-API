@@ -141,7 +141,7 @@ exports.updateUserProfile = asyncHandler(async (req, res) => {
 });
 
 // @desc toggle like a song
-// @route POST /api/users/toggle-like-song
+// @route POST /api/users/toggle-like-song/:id
 // @access Private
 
 exports.toggleLikeSong = asyncHandler(async (req, res) => {
@@ -165,7 +165,7 @@ exports.toggleLikeSong = asyncHandler(async (req, res) => {
                 song.likes = song.likes === 0 ? 0 : song.likes - 1;
                 await user.save();
         }
-
+        await song.save();
         await user.save();
         res.status(StatusCodes.OK).json({
                 status: "success",
@@ -178,7 +178,7 @@ exports.toggleLikeSong = asyncHandler(async (req, res) => {
 });
 
 // @desc toggle follow an artist
-// @route POST /api/users/toggle-follow-artist
+// @route POST /api/users/toggle-follow-artist/:id
 // @access Private
 
 exports.toggleFollowArtist = asyncHandler(async (req, res) => {
@@ -199,10 +199,12 @@ exports.toggleFollowArtist = asyncHandler(async (req, res) => {
                 user.followedArtists.push(req.params.id);
                 artist.followers++;
                 await user.save();
+                await artist.save();
         } else {
                 user.followedArtists.splice(artistIndex, 1);
                 artist.followers = artist.followers === 0 ? 0 : artist.followers - 1;
                 await user.save();
+                await artist.save();
         }
 
         return res.status(StatusCodes.OK).json({
@@ -211,6 +213,43 @@ exports.toggleFollowArtist = asyncHandler(async (req, res) => {
                 data: {
                         _id: user._id,
                         followedArtists: user.followedArtists,
+                },
+        });
+});
+
+//  @desc toggle follow a playlist
+//  @route POST /api/users/toggle-follow-playlist/:id
+//  @access Private
+
+exports.toggleFollowPlaylist = asyncHandler(async (req, res) => {
+        const user = await User.findById(req.user._id);
+        if (!user) {
+                res.status(StatusCodes.NOT_FOUND);
+                throw new Error("User not found");
+        }
+        const playlist = await Playlist.findById(req.params.id);
+        if (!playlist) {
+                res.status(StatusCodes.NOT_FOUND);
+                throw new Error("Playlist not found");
+        }
+        const playlistIndex = user.followedPlaylists.indexOf(req.params.id);
+        if (playlistIndex === -1) {
+                user.followedPlaylists.push(req.params.id);
+                playlist.followers++;
+                await user.save();
+                await playlist.save();
+        } else {
+                user.followedPlaylists.splice(playlistIndex, 1);
+                playlist.followers = playlist.followers === 0 ? 0 : playlist.followers - 1;
+                await user.save();
+                await playlist.save();
+        }
+        return res.status(StatusCodes.OK).json({
+                status: "success",
+                message: playlistIndex === -1 ? "Playlist followed successfully" : "Playlist unfollowed successfully",
+                data: {
+                        _id: user._id,
+                        followedPlaylists: user.followedPlaylists,
                 },
         });
 });
