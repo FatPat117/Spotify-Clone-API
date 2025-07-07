@@ -139,3 +139,40 @@ exports.updateUserProfile = asyncHandler(async (req, res) => {
                 },
         });
 });
+
+// @desc toggle like a song
+// @route POST /api/users/toggle-like-song
+// @access Private
+
+exports.toggleLikeSong = asyncHandler(async (req, res) => {
+        const user = await User.findById(req.user._id);
+        if (!user) {
+                res.status(StatusCodes.NOT_FOUND);
+                throw new Error("User not found");
+        }
+        const song = await Song.findById(req.params.id);
+        if (!song) {
+                res.status(StatusCodes.NOT_FOUND);
+                throw new Error("Song not found");
+        }
+        const songIndex = user.likedSongs.indexOf(req.params.id);
+        if (songIndex === -1) {
+                user.likedSongs.push(req.params.id); // Add the song to the likedSongs array
+                song.likes++;
+                await user.save();
+        } else {
+                user.likedSongs.splice(songIndex, 1);
+                song.likes--;
+                await user.save();
+        }
+
+        await user.save();
+        res.status(StatusCodes.OK).json({
+                status: "success",
+                message: songIndex === -1 ? "Song liked successfully" : "Song unliked successfully",
+                data: {
+                        _id: user._id,
+                        likedSongs: user.likedSongs,
+                },
+        });
+});
