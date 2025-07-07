@@ -13,6 +13,7 @@ router.post("/login", userController.loginUser);
 // Private routes
 router.get("/profile", protect, userController.getUserProfile);
 router.put("/profile", protect, upload.single("profilePicture"), userController.updateUserProfile);
-router.post("/toggle-like-song/:id", protect, userController.toggleLikeSong);
+router.put("/toggle-like-song/:id", protect, userController.toggleLikeSong);
+router.put("/toggle-follow-artist/:id", protect, userController.toggleFollowArtist);
 
 module.exports = router;

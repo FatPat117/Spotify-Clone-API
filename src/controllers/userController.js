@@ -162,7 +162,7 @@ exports.toggleLikeSong = asyncHandler(async (req, res) => {
                 await user.save();
         } else {
                 user.likedSongs.splice(songIndex, 1);
-                song.likes--;
+                song.likes = song.likes === 0 ? 0 : song.likes - 1;
                 await user.save();
         }
 
@@ -173,6 +173,44 @@ exports.toggleLikeSong = asyncHandler(async (req, res) => {
                 data: {
                         _id: user._id,
                         likedSongs: user.likedSongs,
+                },
+        });
+});
+
+// @desc toggle follow an artist
+// @route POST /api/users/toggle-follow-artist
+// @access Private
+
+exports.toggleFollowArtist = asyncHandler(async (req, res) => {
+        const user = await User.findById(req.user._id);
+        if (!user) {
+                res.status(StatusCodes.NOT_FOUND);
+                throw new Error("User not found");
+        }
+
+        const artist = await Artist.findById(req.params.id);
+        if (!artist) {
+                res.status(StatusCodes.NOT_FOUND);
+                throw new Error("Artist not found");
+        }
+
+        const artistIndex = user.followedArtists.indexOf(req.params.id);
+        if (artistIndex === -1) {
+                user.followedArtists.push(req.params.id);
+                artist.followers++;
+                await user.save();
+        } else {
+                user.followedArtists.splice(artistIndex, 1);
+                artist.followers = artist.followers === 0 ? 0 : artist.followers - 1;
+                await user.save();
+        }
+
+        return res.status(StatusCodes.OK).json({
+                status: "success",
+                message: artistIndex === -1 ? "Artist followed successfully" : "Artist unfollowed successfully",
+                data: {
+                        _id: user._id,
+                        followedArtists: user.followedArtists,
                 },
         });
 });
